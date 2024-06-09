@@ -2152,3 +2152,18 @@ input, select, textarea {
 /*	audio::--webkit-media-controls-timeline {
 /*		background-color: transparent; /* Pour les navigateurs WebKit (comme Chrome et Safari) */
 /*	}
+
+
+
+/* Message */
+
+	blockquote {
+		margin-bottom: 0;
+	}
+
+	sup {
+		display: flex;
+		justify-content: flex-end;
+		margin-bottom: 10px;
+		margin-right: 10px;
+	}
