@@ -2164,6 +2164,6 @@ input, select, textarea {
 	sup {
 		display: flex;
 		justify-content: flex-end;
-		margin-bottom: 5px;
 		margin-right: 5px;
+		margin-bottom: 5px;
 	}
