@@ -2155,6 +2155,20 @@ input, select, textarea {
 
 
 
+/* Video */
+
+	video {
+		width: 103%;
+	}
+	
+	article {
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+	}
+
+
+
 /* Livre D'Or */
 
 	blockquote {
