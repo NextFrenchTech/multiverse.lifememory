@@ -315,12 +315,12 @@
 			let isAudioPlaying = false;
 		
 			// Functions
-		
+			
 			// Fonction pour afficher une popup avec un délai
 			const showPopup = (popupElement) => {
 				setTimeout(() => {
 					popupElement.style.display = "block";
-					popupElement.style.zIndex = 2147483647;
+					popupElement.style.zIndex = 9999; // Appliquer un z-index élevé pour garantir qu'elle soit au premier plan
 				}, 1000);
 			};
 		
@@ -373,8 +373,6 @@
 			};
 		
 			// Gestionnaires d'événements
-		
-			// Ajouter des écouteurs d'événements pour les différents boutons
 			acceptButton.addEventListener("click", () => handleUserResponse("accepted"));
 			rejectButton.addEventListener("click", () => {
 				handleUserResponse("rejected");
@@ -405,13 +403,30 @@
 			audio.addEventListener("ended", playNext);
 		
 			// Initialisation
+			sessionStorage.removeItem("userResponse"); // Réinitialiser la réponse de l'utilisateur à chaque chargement de page
+			showPopup(popup); // Afficher toujours la popup initiale au chargement de la page
 		
-			// Réinitialiser la réponse de l'utilisateur à chaque chargement de page
-			sessionStorage.removeItem("userResponse");
-			// Afficher toujours la popup initiale au chargement de la page
-			showPopup(popup);
+			// Nouvelle gestion pour détecter la visibilité de la page (quand l'utilisateur revient après l'avoir quitté)
+			document.addEventListener("visibilitychange", () => {
+				if (!document.hidden) { // La page devient visible
+					// Vérifier si l'audio est en pause ou si la lecture est interrompue
+					if (audio.paused) {
+						// Récupérer la réponse de l'utilisateur depuis le sessionStorage
+						const userResponseOnFocus = sessionStorage.getItem("userResponse");
+						
+						// Si la réponse était "accepted" (l'utilisateur a accepté l'audio)
+						if (userResponseOnFocus === "accepted") {
+							showPopup(popupPursue); // Afficher la popup de reprise
+						} 
+						// Si la réponse était "rejected" (l'utilisateur a rejeté l'audio)
+						else if (userResponseOnFocus === "rejected") {
+							showPopup(popup); // Afficher la popup initiale
+						}
+					}
+				}
+			});
 		});
-
+		
 
 
 /* autoScroll */
