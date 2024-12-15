@@ -304,7 +304,6 @@
 
 		// L'événement DOMContentLoaded est déclenché lorsque le document HTML a été complètement chargé et analysé
 		document.addEventListener("DOMContentLoaded", () => {
-			// Variables
 			const popup = document.getElementById("popup");
 			const acceptButton = document.getElementById("acceptButton");
 			const rejectButton = document.getElementById("rejectButton");
@@ -313,46 +312,45 @@
 			const cancelButton = document.getElementById("cancelButton");
 			const audio = document.getElementById("audio");
 			let isAudioPlaying = false;
+			let isPopupVisible = false;  // Ajout d'un flag pour contrôler l'affichage de la popup
 		
-			// Functions
-			
-			// Fonction pour afficher une popup avec un délai
 			const showPopup = (popupElement) => {
-				setTimeout(() => {
-					popupElement.style.display = "block";
-					popupElement.style.zIndex = 9999; // Appliquer un z-index élevé pour garantir qu'elle soit au premier plan
-				}, 1000);
+				if (!isPopupVisible) {  // Vérifier si une popup est déjà affichée
+					setTimeout(() => {
+						popupElement.style.display = "block";
+						popupElement.style.zIndex = 9999;
+						isPopupVisible = true;  // Marquer la popup comme visible
+					}, 1000);
+				}
 			};
 		
-			// Fonction pour démarrer la lecture audio
 			const playAudio = () => {
 				isAudioPlaying = true;
 				audio.play().catch(error => console.error("Audio play error: ", error));
 			};
 		
-			// Fonction pour gérer la réponse de l'utilisateur à la proposition
 			const handleUserResponse = (response) => {
 				sessionStorage.setItem("userResponse", response);
 				popup.style.display = "none";
+				isPopupVisible = false;  // Réinitialiser le flag de la popup
 				if (response === "accepted") {
-					playAudio(); // Si la réponse est "accepted", démarrer la lecture audio
+					playAudio();
 				}
 			};
 		
-			// Fonction pour reprendre la lecture audio
 			const handleResume = () => {
 				popupPursue.style.display = "none";
-				playAudio(); // Reprendre la lecture audio
+				isPopupVisible = false;  // Réinitialiser le flag de la popup
+				playAudio();
 			};
 		
-			// Fonction pour annuler la reprise et réinitialiser la playlist audio
 			const handleCancel = () => {
 				popupPursue.style.display = "none";
 				sessionStorage.setItem("userResponse", "rejected");
-				resetPlaylist(); // Réinitialiser la playlist audio
+				resetPlaylist();
+				isPopupVisible = false;  // Réinitialiser le flag de la popup
 			};
 		
-			// Fonction pour réinitialiser la playlist audio
 			const resetPlaylist = () => {
 				const sources = audio.getElementsByTagName('source');
 				if (sources.length > 0) {
@@ -361,7 +359,6 @@
 				}
 			};
 		
-			// Fonction pour passer à la piste audio suivante dans la playlist
 			const playNext = () => {
 				const sources = Array.from(audio.getElementsByTagName('source'));
 				const currentSourceIndex = sources.findIndex(src => src.src === audio.src);
@@ -369,64 +366,56 @@
 		
 				audio.src = sources[nextSourceIndex].src;
 				audio.load();
-				playAudio(); // Démarrer la lecture audio de la piste suivante
+				playAudio();
 			};
 		
-			// Gestionnaires d'événements
 			acceptButton.addEventListener("click", () => handleUserResponse("accepted"));
 			rejectButton.addEventListener("click", () => {
 				handleUserResponse("rejected");
-				resetPlaylist(); // Réinitialiser la playlist audio si la proposition est rejetée
+				resetPlaylist();
 			});
 			resumeButton.addEventListener("click", handleResume);
 			cancelButton.addEventListener("click", handleCancel);
 		
-			// Gestion de la lecture audio lors de la perte de focus de la fenêtre
 			window.addEventListener("blur", () => {
 				isAudioPlaying = !audio.paused;
 				audio.pause();
 			});
 		
-			// Gestion de l'affichage des popups lors du regain de focus de la fenêtre
 			window.addEventListener("focus", () => {
 				const userResponseOnFocus = sessionStorage.getItem("userResponse");
 				if (!userResponseOnFocus && popup.style.display !== "block") {
-					showPopup(popup); // Afficher la popup initiale si aucune réponse précédente n'est enregistrée et si la popup n'est pas déjà affichée
+					showPopup(popup);
 				} else if (userResponseOnFocus === "accepted") {
-					showPopup(popupPursue); // Afficher la popup de reprise si la réponse précédente est "accepted"
+					showPopup(popupPursue);
 				} else if (userResponseOnFocus === "rejected") {
-					showPopup(popup); // Afficher la popup initiale si la réponse précédente est "rejected"
+					showPopup(popup);
 				}
 			});
 		
-			// Gestion de la lecture de la piste audio suivante à la fin de la piste actuelle
 			audio.addEventListener("ended", playNext);
 		
-			// Initialisation
-			sessionStorage.removeItem("userResponse"); // Réinitialiser la réponse de l'utilisateur à chaque chargement de page
-			showPopup(popup); // Afficher toujours la popup initiale au chargement de la page
+			sessionStorage.removeItem("userResponse");
+			showPopup(popup);
 		
-			// Nouvelle gestion pour détecter la visibilité de la page (quand l'utilisateur revient après l'avoir quitté)
 			document.addEventListener("visibilitychange", () => {
-				if (!document.hidden) { // La page devient visible
-					// Vérifier si l'audio est en pause ou si la lecture est interrompue
-					if (audio.paused) {
-						// Récupérer la réponse de l'utilisateur depuis le sessionStorage
-						const userResponseOnFocus = sessionStorage.getItem("userResponse");
-						
-						// Si la réponse était "accepted" (l'utilisateur a accepté l'audio)
-						if (userResponseOnFocus === "accepted") {
-							showPopup(popupPursue); // Afficher la popup de reprise
-						} 
-						// Si la réponse était "rejected" (l'utilisateur a rejeté l'audio)
-						else if (userResponseOnFocus === "rejected") {
-							showPopup(popup); // Afficher la popup initiale
+				if (!document.hidden) {
+					const userResponseOnFocus = sessionStorage.getItem("userResponse");
+		
+					// Ne pas afficher deux popups en même temps
+					if (!isPopupVisible) {  // Vérifier si une popup est déjà affichée
+						if (audio.paused) {
+							if (userResponseOnFocus === "accepted") {
+								showPopup(popupPursue);
+							} else if (userResponseOnFocus === "rejected") {
+								showPopup(popup);
+							}
 						}
 					}
 				}
 			});
 		});
-		
+				
 
 
 /* autoScroll */
